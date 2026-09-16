@@ -16,6 +16,7 @@ const (
 	ServiceBattery     = "180F"
 	ServiceTemperature = "1809"
 	ServiceHumidity    = "181A"
+	ServiceMiBand      = "FEE0"
 
 	CharBatteryLevel = "2A19"
 	CharTemperature  = "2A6E"
@@ -106,6 +107,19 @@ func ParseBLEDataWithBindKey(adv types.Advertisement, cfg *types.BLEConfig, bind
 
 		// Известные сервисы
 		switch {
+		case strings.Contains(uuid, ServiceMiBand):
+			// Mi Band 4 передаёт шаги в advertising/scan response
+			// через сервис FEE0 как 4-байтовое little-endian uint32.
+			// GATT-подключение для получения этого значения не требуется.
+			if len(sd.Data) == 4 {
+				result["steps"] = types.ParsedValue{
+					Value:     binary.LittleEndian.Uint32(sd.Data),
+					Unit:      "steps",
+					Type:      "steps",
+					Source:    "advertisement",
+					Timestamp: now,
+				}
+			}
 		case strings.Contains(uuid, ServiceTemperature):
 			if temp, ok := parseTemperature(sd.Data); ok {
 				result["temp"] = types.ParsedValue{
@@ -631,7 +645,6 @@ func parseATCServiceData(data []byte, now time.Time) map[string]types.ParsedValu
 
 		//* fmt.Printf ("%s DBG Парсинг ATC (стандартный 13 байт): len=%d data=%s tempRaw=%d temp=%.2f°C hum=%d%% bat=%d%% volt=%dmV\n",
 		//	time.Now().Format("3:04PM"),
-		//	len(data),
 		//	hex.EncodeToString(data),
 		//	int(tempRaw),
 		//	temp,
@@ -671,7 +684,6 @@ func parseATCServiceData(data []byte, now time.Time) map[string]types.ParsedValu
 
 		//* fmt.Printf ("%s DBG Парсинг ATC (PVVX 15 байт): len=%d data=%s tempRaw=%d temp=%.2f°C humRaw=%d hum=%.1f%% volt=%dmV bat=%d%% (рассчитано)\n",
 		//	time.Now().Format("3:04PM"),
-		//	len(data),
 		//	hex.EncodeToString(data),
 		//	int(tempRaw),
 		//	temp,
