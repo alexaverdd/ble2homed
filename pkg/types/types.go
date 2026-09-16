@@ -50,13 +50,13 @@ type KnownDevice struct {
 	MinRSSI          int                    `yaml:"min_rssi" json:"min_rssi"`
 	CacheState       bool                   `yaml:"cache_state" json:"cache_state"`
 	BindKey          string                 `yaml:"bind_key" json:"bind_key"`
-	PresenceTimeout  int                    `yaml:"presence_timeout" json:"presence_timeout"`
+	PresenceTimeout  int                    `yaml:"presence_timeout" yaml:"presence_timeout"` 
 	Model            string                 `yaml:"model" json:"model"`
 }
 
 // ServiceInfo — информация о сервисе
 type ServiceInfo struct {
-	Name string `yaml:"name" json:"name"`
+	Name string `yaml:"name"`
 }
 
 // MQTTConfig — настройки MQTT брокера
@@ -72,7 +72,7 @@ type MQTTConfig struct {
 type BLEConfig struct {
 	Adapter      string   `yaml:"adapter" json:"adapter"`
 	ScanTimeout  string   `yaml:"scan_timeout" json:"scan_timeout"`
-	ScanInterval int      `yaml:"scan_interval" json:"scan_interval"`   // длительность одного сканирования (секунды)
+	ScanInterval int      `yaml:"scanInterval" json:"scanInterval"`   // длительность одного сканирования (секунды)
 	RestartPause int      `yaml:"restart_pause" json:"restart_pause"`   // пауза между циклами сканирования (секунды)
 	FilterMACs   []string `yaml:"filter_macs" json:"filter_macs"`
 	Connect      bool     `yaml:"connect" json:"connect"` // Подключаться для GATT операций
@@ -182,6 +182,18 @@ type HomedExpose struct {
 	Common ExposeCommon `json:"common"`
 }
 
+type ExposeCommon struct {
+	Items   []string               `json:"items"`
+	Options map[string]ExposeOption `json:"options"`
+}
+
+type ExposeOption struct {
+	Class  string `json:"class,omitempty"`
+	State  string `json:"state"`
+	Type   string `json:"type"`
+	Unit   string `json:"unit,omitempty"`
+}
+
 // BleStatusDevice — информация об устройстве для топика status/ble
 type BleStatusDevice struct {
 	Active      bool              `json:"active"`
@@ -189,7 +201,7 @@ type BleStatusDevice struct {
 	Discovery   bool              `json:"discovery"`
 	Exposes     []string          `json:"exposes"`
 	ID          string            `json:"id"`
-	Name        string            `json:"name"`
+	Name         string            `json:"name"`
 	Options     map[string]ExposeOption `json:"options,omitempty"`
 	Real        bool              `json:"real"`
 	Last        int64             `json:"last"`
@@ -202,18 +214,6 @@ type BleStatus struct {
 	PermitJoin bool              `json:"permitJoin"`
 	Timestamp  int64             `json:"timestamp"`
 	Version    string            `json:"version"`
-}
-
-type ExposeCommon struct {
-	Items   []string               `json:"items"`
-	Options map[string]ExposeOption `json:"options"`
-}
-
-type ExposeOption struct {
-	Class  string `json:"class,omitempty"`
-	State  string `json:"state"`
-	Type   string `json:"type"`
-	Unit   string `json:"unit,omitempty"`
 }
 
 // NewDevice — создание нового устройства
@@ -313,7 +313,7 @@ func (d *Device) GetExposeList() []DeviceExpose {
 	defer d.Mu.RUnlock()
 
 	// Фиксированный порядок полей (чтобы набор exposes не менялся местами)
-	exposeOrder := []string{"temp", "humidity", "battery", "voltage", "pressure", "illuminance"}
+	exposeOrder := []string{"temp", "humidity", "battery", "steps", "voltage", "pressure", "illuminance"}
 	
 	exposes := make([]DeviceExpose, 0, 1+len(exposeOrder))
 	
@@ -364,6 +364,11 @@ func (d *Device) GetExposeList() []DeviceExpose {
 				expose.Name = "Illuminance"
 				if expose.Unit == "" {
 					expose.Unit = "lx"
+				}
+			case "steps":
+				expose.Name = "Steps"
+				if expose.Unit == "" {
+					expose.Unit = "steps"
 				}
 			}
 
