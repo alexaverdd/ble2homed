@@ -13,15 +13,12 @@ import (
 // Формат (эмпирически подтверждён на реальных пакетах Mi Band 4):
 //
 //	data[0:2] — количество шагов, uint16 little-endian
-//	data[2:]  — padding (нули); в текущей прошивке Mi Band 4 не несёт данных.
+//	data[2:]  — padding (нули)
 //
 // Примеры реальных пакетов (Service Data для UUID FEE0):
 //
 //	0D 04 00 00  →  0x040D = 1037 шагов
 //	30 04        →  0x0430 = 1072 шагов
-//
-// Парсер не паникует на коротких/повреждённых пакетах и возвращает
-// пустой результат, если данных недостаточно для чтения значения.
 func parseMiBandFEE0Data(data []byte, now time.Time) map[string]types.ParsedValue {
 	result := make(map[string]types.ParsedValue)
 
