@@ -983,7 +983,7 @@ func (p *Publisher) PublishStartupExpose(mac string) error {
 		case "rssi":
 			unit = "dBm"
   case "steps"
-   unit ="steps"
+   unit = "steps"
 		}
 
 		options[item] = types.ExposeOption{
