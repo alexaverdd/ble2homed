@@ -104,6 +104,13 @@ func ParseBLEDataWithBindKey(adv types.Advertisement, cfg *types.BLEConfig, bind
 			}
 		}
 
+// ✅ Mi Band FEE0 (Huami/Amazfit fitness service — steps)
+if strings.Contains(uuid, "FEE0") && len(sd.Data) >= 2 {
+	for k, v := range parseMiBandFEE0Data(sd.Data, now) {
+		result[k] = v
+	}
+}
+
 		// Известные сервисы
 		switch {
 		case strings.Contains(uuid, ServiceTemperature):
