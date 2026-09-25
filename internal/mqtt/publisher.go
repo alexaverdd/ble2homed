@@ -533,7 +533,7 @@ func (p *Publisher) hasUsefulDeviceData(device *types.Device) bool {
 	parsedValues := device.GetParsedValues()
 	for key, val := range parsedValues {
 		switch key {
-		case "temp", "humidity", "battery", "pressure", "illuminance":
+		case "temp", "humidity", "battery", "pressure", "illuminance", "steps":
 			if val.Value != nil {
 				return true
 			}
@@ -740,7 +740,7 @@ func (p *Publisher) PublishAdvertisement(mac string, adv types.Advertisement, pa
 	usefulFields := map[string]interface{}{}
 	for key, val := range parsed {
 		switch key {
-		case "temp", "humidity", "battery", "pressure", "illuminance":
+		case "temp", "humidity", "battery", "pressure", "illuminance", "steps":
 			if val.Value != nil {
 				usefulFields[key] = val.Value
 			}
@@ -789,7 +789,7 @@ func (p *Publisher) publishHomed(mac string, adv types.Advertisement, parsed map
 	hasUsefulData := false
 	for key, val := range parsed {
 		switch key {
-		case "temp", "humidity", "battery", "pressure", "illuminance":
+		case "temp", "humidity", "battery", "pressure", "illuminance", "steps":
 			if val.Value != nil {
 				hasUsefulData = true
 				break
@@ -887,6 +887,8 @@ func (p *Publisher) publishExpose(mac string, device *types.Device) error {
 			unit = "lx"
 		case "rssi":
 			unit = "dBm"
+  case "steps":
+   unit = "steps"
 		}
 
 		options[item] = types.ExposeOption{
@@ -980,6 +982,8 @@ func (p *Publisher) PublishStartupExpose(mac string) error {
 			unit = "lx"
 		case "rssi":
 			unit = "dBm"
+  case "steps"
+   unit ="steps"
 		}
 
 		options[item] = types.ExposeOption{
