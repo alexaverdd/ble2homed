@@ -982,7 +982,7 @@ func (p *Publisher) PublishStartupExpose(mac string) error {
 			unit = "lx"
 		case "rssi":
 			unit = "dBm"
-  case "steps"
+  case "steps":
    unit = "steps"
 		}
 
