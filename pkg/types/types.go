@@ -313,7 +313,7 @@ func (d *Device) GetExposeList() []DeviceExpose {
 	defer d.Mu.RUnlock()
 
 	// Фиксированный порядок полей (чтобы набор exposes не менялся местами)
-	exposeOrder := []string{"temp", "humidity", "battery", "voltage", "pressure", "illuminance"}
+	exposeOrder := []string{"temp", "humidity", "battery", "steps", "voltage", "pressure", "illuminance"}
 	
 	exposes := make([]DeviceExpose, 0, 1+len(exposeOrder))
 	
@@ -365,6 +365,11 @@ func (d *Device) GetExposeList() []DeviceExpose {
 				if expose.Unit == "" {
 					expose.Unit = "lx"
 				}
+   case "steps":
+	   expose.Name = "Steps"
+	   if expose.Unit == "" {
+	  	 expose.Unit = "steps"
+	   }
 			}
 
 			exposes = append(exposes, expose)
