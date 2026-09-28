@@ -267,7 +267,7 @@ func run(ctx context.Context, cfg *types.Config) error {
 
 // periodicTasks — периодические задачи
 func periodicTasks(ctx context.Context, publisher *mqtt.Publisher, hadiscovery *discovery.Discovery, historyManager *history.Manager, cfg *types.Config) {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	historyTicker := time.NewTicker(10 * time.Second)
