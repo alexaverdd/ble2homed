@@ -40,7 +40,7 @@ class BLE extends DeviceService
 updatePage()
     {
         document.querySelector('#serviceVersion').innerHTML = this.version ? 'BLE ' + this.version : '<i>unknown</i>';
-        document.querySelector('#permitJoin i').className = 'icon-enable ' + (this.permitJoin ? 'warning' : 'shade');
+        document.querySelector('#permitJoin i').className = 'mdi-power-standby ' + (this.permitJoin ? 'warning' : 'shade');
     }
 
     parseMessage(list, message)
@@ -51,6 +51,7 @@ updatePage()
 
             this.names = message.names;
             this.version = message.version;
+            
 
             message.devices.forEach(device =>
             {
@@ -110,14 +111,14 @@ showPage(data)
         let list = data ? data.split('=') : new Array();
         let device;
 
-        menu.innerHTML  = '<span id="list"><i class="icon-list"></i> List</span>';
-        menu.innerHTML += '<span id="add"><i class="icon-plus"></i> Add</span>';
-        menu.innerHTML += '<span id="import" class="mobileHidden"><i class="icon-upload"></i> Import</span>';
-        menu.innerHTML += '<span id="permitJoin"><i class="icon-enable"></i> Permit Join</span>';
+        menu.innerHTML  = '<span id="list"><i class="mdi-menu"></i> List</span>';
+        menu.innerHTML += '<span id="add"><i class="mdi-plus"></i> Add</span>';
+        menu.innerHTML += '<span id="import" class="mobileHidden"><i class="mdi-upload"></i> Import</span>';
+        menu.innerHTML += '<span id="permitJoin"><i class="mdi-power-standby shade"></i> Permit Join</span>';
 
 menu.querySelector('#list').addEventListener('click', function() { this.controller.showPage(this.service); }.bind(this));
         menu.querySelector('#add').addEventListener('click', function() { this.showDeviceEdit(); }.bind(this));
-        menu.querySelector('#permitJoin').addEventListener('click', function() { menu.querySelector('#permitJoin i').className = 'icon-enable'; this.serviceCommand({action: 'togglePermitJoin'}); }.bind(this));
+        menu.querySelector('#permitJoin').addEventListener('click', function() { menu.querySelector('#permitJoin i').className = 'mdi-power-standby shade'; this.serviceCommand({action: 'togglePermitJoin'}); }.bind(this));
 
         menu.querySelector('#import').addEventListener('click', function()
         {
