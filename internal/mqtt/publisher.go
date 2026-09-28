@@ -744,7 +744,7 @@ func (p *Publisher) PublishAdvertisement(mac string, adv types.Advertisement, pa
 
 	// Сбрасываем флаг отправки оффлайн статуса когда устройство вернулось онлайн
 	p.mu.Lock()
-	delete(p.offlinePublished, mac)
+	delete(p.offlinePublished, types.NormalizeMACForTopic(mac))
 	p.mu.Unlock()
 
 	// Если устройство перешло из оффлайна — логируем это отдельно
@@ -775,7 +775,7 @@ func (p *Publisher) PublishAdvertisement(mac string, adv types.Advertisement, pa
 	}
 
 	if len(usefulFields) > 0 {
-		logEvent := p.logger.Info().Str("mac", mac)
+		logEvent := p.logger.Debug().Str("mac", mac)
 		for k, v := range usefulFields {
 			logEvent = logEvent.Interface(k, v)
 		}
