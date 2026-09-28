@@ -1249,8 +1249,30 @@ func (p *Publisher) CheckOfflineDevices() {
 		lastSeen := device.GetLastSeen()
 
 		if !isOnline {
-			continue // Уже offline
-		}
+	// Устройство уже помечено offline. Но возможно, публикация offline
+	// ранее упала (MQTT не был подключён, таймаут publish и т.п.).
+	// Пробуем ещё раз, если флаг offlinePublished не установлен —
+	// это значит, что успешной публикации ещё не было.
+	p.mu.RLock()
+	alreadySent := p.offlinePublished[mac]
+	p.mu.RUnlock()
+
+	if alreadySent {
+		continue
+	}
+
+	if err := p.publishDeviceStatus(mac, "offline", lastSeen); err != nil {
+		p.logger.Error().Err(err).Str("mac", mac).
+			Msg("Failed to republish offline status")
+	} else {
+		p.mu.Lock()
+		p.offlinePublished[mac] = true
+		p.mu.Unlock()
+		p.logger.Info().Str("mac", mac).
+			Msg("Offline status republished successfully")
+	}
+	continue
+}
 
 		// Определяем timeout для устройства
 		timeout := p.config.GetPresenceTimeout(mac)
