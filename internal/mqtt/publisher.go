@@ -446,6 +446,14 @@ func (p *Publisher) RefreshKnownDevicesFromDatabase() error {
 	return p.loadKnownDevicesFromDatabase()
 }
 
+// loadKnownDevicesFromDatabase — загрузка известных устройств из database.json.
+//
+// Работает по принципу "merge с приоритетом конфига":
+//   - HOMEd-поля (Name, HOMEdCloud, HOMEdDiscovery) обновляются из БД,
+//     потому что их пользователь может менять через веб-UI.
+//   - ble2homed-поля (PresenceTimeout, MinRSSI, BindKey, Model) НЕ трогаются,
+//     потому что их в БД нет, и они должны браться из config.json.
+//   - Устройства, отсутствующие в config.json, добавляются из БД с дефолтами.
 func (p *Publisher) loadKnownDevicesFromDatabase() error {
 	db, err := p.loadDeviceDatabase()
 	if err != nil {
@@ -459,8 +467,15 @@ func (p *Publisher) loadKnownDevicesFromDatabase() error {
 	// Дедупликация устройств из базы данных перед загрузкой
 	db.Devices = p.deduplicateDevices(db.Devices)
 
-	knownDevices := make(map[string]types.KnownDevice, len(db.Devices))
-	order := make([]string, 0, len(db.Devices))
+	// Инициализируем карту, если её ещё нет
+	if p.config.KnownDevices == nil {
+		p.config.KnownDevices = make(map[string]types.KnownDevice)
+	}
+
+	// Порядок: сначала идут устройства из config.json (в их исходном порядке),
+	// затем добавляются устройства из БД, которых нет в config.json.
+	order := make([]string, 0, len(p.config.KnownDevicesOrder)+len(db.Devices))
+	order = append(order, p.config.KnownDevicesOrder...)
 
 	for _, entry := range db.Devices {
 		id := types.NormalizeMACForTopic(entry.ID)
@@ -468,19 +483,31 @@ func (p *Publisher) loadKnownDevicesFromDatabase() error {
 			continue
 		}
 
-		knownDevices[id] = types.KnownDevice{
-			Name:           entry.Name,
-			HOMEdCloud:     entry.Cloud,
-			HOMEdDiscovery: entry.Discovery,
+		if existing, ok := p.config.KnownDevices[id]; ok {
+			// Устройство уже есть в config.json.
+			// Обновляем только HOMEd-поля — они могут меняться через веб-UI.
+			// ble2homed-поля (PresenceTimeout, MinRSSI, BindKey, Model)
+			// сохраняются нетронутыми — они читаются из config.json.
+			existing.Name = entry.Name
+			existing.HOMEdCloud = entry.Cloud
+			existing.HOMEdDiscovery = entry.Discovery
+			p.config.KnownDevices[id] = existing
+		} else {
+			// Устройства нет в config.json (например, добавлено через HOMEd UI).
+			// Создаём запись с дефолтами. PresenceTimeout=0 → сработает
+			// глобальный из config.json.
+			p.config.KnownDevices[id] = types.KnownDevice{
+				Name:           entry.Name,
+				HOMEdCloud:     entry.Cloud,
+				HOMEdDiscovery: entry.Discovery,
+			}
 		}
-		order = append(order, id)
+
+		if !containsString(order, id) {
+			order = append(order, id)
+		}
 	}
 
-	if len(knownDevices) == 0 {
-		return nil
-	}
-
-	p.config.KnownDevices = knownDevices
 	p.config.KnownDevicesOrder = order
 	return nil
 }
