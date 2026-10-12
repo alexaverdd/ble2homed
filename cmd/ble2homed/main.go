@@ -178,11 +178,31 @@ func run(ctx context.Context, cfg *types.Config) error {
 	}
 
 	// 6. Создаем BLE сканер
-	scanner, err := ble.NewScanner(&cfg.BLE, log.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to create BLE scanner: %w", err)
-	}
-
+	//scanner, err := ble.NewScanner(&cfg.BLE, log.Logger)
+	//if err != nil {
+	//	return fmt.Errorf("failed to create BLE scanner: %w", err)
+	//}
+    var scanner *ble.Scanner
+const maxAttempts = 30
+for attempt := 1; attempt <= maxAttempts; attempt++ {
+    scanner, err = ble.NewScanner(&cfg.BLE, log.Logger)
+    if err == nil {
+        if attempt > 1 {
+            log.Info().Int("attempt", attempt).Msg("BLE scanner created after retry")
+        }
+        break
+    }
+    log.Warn().Err(err).Int("attempt", attempt).Int("max", maxAttempts).
+        Msg("Failed to create BLE scanner, retrying in 5s")
+    select {
+    case <-ctx.Done():
+        return ctx.Err()
+    case <-time.After(5 * time.Second):
+    }
+}
+if scanner == nil {
+    return fmt.Errorf("failed to create BLE scanner after %d attempts: %w", maxAttempts, err)
+}
 	// Обработчик advertising данных
 	scanner.SetAdvertisementHandler(func(adv types.Advertisement) {
 		// Фильтр: если permitJoin = false, парсим только из базы известных устройств
