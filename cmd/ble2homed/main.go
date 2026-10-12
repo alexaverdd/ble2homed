@@ -183,6 +183,7 @@ func run(ctx context.Context, cfg *types.Config) error {
 	//	return fmt.Errorf("failed to create BLE scanner: %w", err)
 	//}
     var scanner *ble.Scanner
+	var err error
 const maxAttempts = 30
 for attempt := 1; attempt <= maxAttempts; attempt++ {
     scanner, err = ble.NewScanner(&cfg.BLE, log.Logger)
